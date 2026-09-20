@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Оценка финального задания</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#ffffff; --text:#151a21; --muted:#697586;
+    --border:#e3e7ee; --accent:#2f6df6; --accent-soft:#eef4ff;
+    --ok:#12a150; --danger:#e5484d; --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:860px; margin:0 auto; padding:20px 16px 80px}
+
+  /* ---------- header / progress ---------- */
+  .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:6px 0 14px}
+  .brand{font-weight:700; font-size:17px; letter-spacing:-.01em}
+  .score-chip{font-size:13px; color:var(--muted); background:#fff; border:1px solid var(--border);
+    padding:6px 14px; border-radius:999px; white-space:nowrap}
+  .score-chip b{color:var(--text); font-size:14px}
+  .progress{height:6px; background:#e6eaf1; border-radius:999px; overflow:hidden; margin-bottom:20px}
+  .progress > i{display:block; height:100%; width:0; background:var(--accent);
+    border-radius:999px; transition:width .25s ease}
+
+  /* ---------- cards ---------- */
+  .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:24px; box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .block{background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:24px; box-shadow:0 1px 2px rgba(16,24,40,.04); margin-top:16px}
+  h1{font-size:26px; line-height:1.25; margin:0 0 8px; letter-spacing:-.02em}
+  h2{font-size:20px; margin:0 0 6px; letter-spacing:-.01em}
+  .block-title{font-size:16px; margin:0 0 2px; letter-spacing:-.01em}
+  .lead{color:var(--muted); margin:0 0 20px; font-size:14.5px}
+
+  /* ---------- role cards ---------- */
+  .role-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:20px 0 14px}
+  @media (max-width:620px){.role-grid{grid-template-columns:1fr}}
+  .role-card{text-align:left; background:#fff; border:1px solid var(--border); border-radius:14px;
+    padding:20px; cursor:pointer; font:inherit; color:inherit; transition:.15s; display:block; width:100%}
+  .role-card:hover{border-color:var(--accent); box-shadow:0 8px 24px rgba(47,109,246,.13); transform:translateY(-2px)}
+  .role-emoji{font-size:26px; line-height:1}
+  .role-name{font-weight:700; font-size:17px; margin:10px 0 4px}
+  .role-desc{font-size:13.5px; color:var(--muted)}
+  .role-meta{font-size:12.5px; color:var(--accent); font-weight:600; margin-top:10px}
+  .hint{font-size:13px; color:var(--muted); margin:6px 0 0}
+
+  /* ---------- meta fields ---------- */
+  .meta{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:620px){.meta{grid-template-columns:1fr}}
+  .field{display:flex; flex-direction:column; gap:6px}
+  .field.full{grid-column:1 / -1}
+  .field label{font-size:13px; font-weight:600; color:#374151}
+  .req{color:var(--danger)}
+  .field input, .field textarea{
+    font:inherit; font-size:14.5px; padding:10px 12px; border:1px solid var(--border);
+    border-radius:10px; background:#fff; color:inherit; outline:none; transition:.15s; width:100%
+  }
+  .field input:focus, .field textarea:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+  .field input.invalid{border-color:var(--danger); box-shadow:0 0 0 3px rgba(229,72,77,.12)}
+
+  /* ---------- questions ---------- */
+  .q{padding:18px 0; border-top:1px solid var(--border)}
+  .q:first-of-type{border-top:none; padding-top:10px}
+  .q-head{display:flex; gap:10px; align-items:flex-start; margin-bottom:12px}
+  .q-code{flex:none; font-size:12px; font-weight:700; color:var(--accent); background:var(--accent-soft);
+    border-radius:6px; padding:2px 8px; margin-top:2px}
+  .q-title{font-weight:600; font-size:15px}
+  .opts{display:flex; flex-direction:column; gap:8px}
+  .opt{position:relative; display:flex; gap:12px; align-items:flex-start; padding:12px 14px;
+    border:1px solid var(--border); border-radius:12px; cursor:pointer; transition:.12s; background:#fff}
+  .opt:hover{background:#fafbfd; border-color:#c9d3e0}
+  .opt input{position:absolute; opacity:0; pointer-events:none}
+  .badge{flex:none; width:24px; height:24px; border-radius:50%; background:#f0f2f6; color:#4b5563;
+    display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700}
+  .opt.selected{border-color:var(--accent); background:var(--accent-soft);
+    box-shadow:inset 0 0 0 1px var(--accent)}
+  .opt.selected .badge{background:var(--accent); color:#fff}
+  .opt-body{font-size:14px; color:#374151}
+  .opt.selected .opt-body{color:var(--text)}
+  .q.invalid .opts{outline:2px solid rgba(229,72,77,.35); outline-offset:6px; border-radius:12px}
+  .q-comment{margin-top:10px; font:inherit; font-size:14px; padding:10px 12px; border:1px solid var(--border);
+    border-radius:10px; width:100%; resize:vertical; outline:none; color:inherit}
+  .q-comment:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+
+  /* ---------- buttons / messages ---------- */
+  .actions{display:flex; gap:12px; justify-content:space-between; align-items:center; margin-top:22px}
+  .btn{font:inherit; font-size:15px; font-weight:600; padding:12px 22px; border-radius:12px;
+    cursor:pointer; border:1px solid transparent; transition:.15s}
+  .btn.primary{background:var(--accent); color:#fff}
+  .btn.primary:hover{background:#2559d6}
+  .btn.primary:disabled{opacity:.6; cursor:default}
+  .btn.ghost{background:#fff; border-color:var(--border); color:var(--text)}
+  .btn.ghost:hover{border-color:#c9d3e0}
+  .form-error{margin-top:16px; padding:12px 16px; border-radius:12px; font-size:14px;
+    background:#fef2f2; border:1px solid #fecaca; color:#b91c1c}
+
+  /* ---------- done ---------- */
+  .done{text-align:center; padding:44px 24px}
+  .done-icon{width:56px; height:56px; border-radius:50%; background:#e9f9ef; color:var(--ok);
+    display:flex; align-items:center; justify-content:center; font-size:28px; margin:0 auto 16px}
+  .done .btn{margin-top:8px}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">Оценка финального задания</div>
+    <div class="score-chip" id="scoreChip" hidden>Балл: <b id="scoreVal">0</b> / <span id="scoreMax">16</span></div>
+  </div>
+  <div class="progress" id="progressWrap" hidden><i id="progressBar"></i></div>
+
+  <main>
+    <!-- ============ ЭКРАН 1: выбор роли ============ -->
+    <section class="screen" id="screen-role">
+      <div class="card">
+        <h1>Кто заполняет анкету?</h1>
+        <p class="lead">Набор блоков зависит от роли. Максимум за обе части вместе — 16 баллов.</p>
+
+        <div class="role-grid">
+          <button type="button" class="role-card" data-role="admin">
+            <div class="role-emoji">🧑‍🏫</div>
+            <div class="role-name">Админ</div>
+            <div class="role-desc">Блок 1 «Подготовка теста» и блок 4 «Анализ результатов»</div>
+            <div class="role-meta">Максимум 4 балла</div>
+          </button>
+
+          <button type="button" class="role-card" data-role="respondent">
+            <div class="role-emoji">🙋</div>
+            <div class="role-name">Респондент</div>
+            <div class="role-desc">Блок 2 «Поведение ведущего» и блок 3 «Сложные ситуации»</div>
+            <div class="role-meta">Максимум 12 баллов</div>
+          </button>
+        </div>
+
+        <p class="hint">Анкету респондента заполняют сразу после сессии — в паузе между участниками.</p>
+      </div>
+    </section>
+
+    <!-- ============ ЭКРАН 2: форма ============ -->
+    <section class="screen" id="screen-form" hidden>
+      <form id="form" novalidate>
+
+        <div class="card">
+          <h2 id="formTitle"></h2>
+          <p class="lead" id="formSubtitle"></p>
+
+          <div class="meta">
+            <div class="field">
+              <label for="sessionId">ID / название сессии <span class="req">*</span></label>
+              <input id="sessionId" name="sessionId" type="text" placeholder="Например: S-2025-01-15-01" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="sessionDate">Дата сессии</label>
+              <input id="sessionDate" name="sessionDate" type="date">
+            </div>
+            <div class="field">
+              <label for="moderator">ФИО ведущего (кого оцениваем) <span class="req">*</span></label>
+              <input id="moderator" name="moderator" type="text" placeholder="Иванов Иван" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="expert">ФИО эксперта (кто заполняет) <span class="req">*</span></label>
+              <input id="expert" name="expert" type="text" placeholder="Петров Пётр" autocomplete="off">
+            </div>
+          </div>
+        </div>
+
+        <div id="blocks"></div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="field">
+            <label for="overallComment">Общий комментарий (необязательно)</label>
+            <textarea id="overallComment" name="overallComment" rows="3"
+              placeholder="Контекст сессии, особые обстоятельства, что стоит обсудить"></textarea>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn ghost" id="backBtn">← Назад</button>
+          <button type="submit" class="btn primary" id="submitBtn">Отправить</button>
+        </div>
+
+        <div class="form-error" id="formError" hidden></div>
+      </form>
+    </section>
+
+    <!-- ============ ЭКРАН 3: спасибо ============ -->
+    <section class="screen" id="screen-done" hidden>
+      <div class="card done">
+        <div class="done-icon">✓</div>
+        <h2>Ответ отправлен</h2>
+        <p class="lead" id="doneText"></p>
+        <button type="button" class="btn ghost" id="againBtn">Заполнить ещё одну анкету</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   1. НАСТРОЙКА — вставьте URL веб-приложения Google Apps Script
+   ============================================================ */
+const SCRIPT_URL = 'PASTE_YOUR_WEB_APP_URL_HERE';
+
+/* ============================================================
+   2. КОНФИГ: критерии, блоки, уровни 0/1/2
+   ============================================================ */
+const ROLES = {
+  admin: {
+    label: 'Админ',
+    title: 'Анкета админа',
+    subtitle: 'Блок 1 «Подготовка теста» и блок 4 «Анализ результатов»',
+    max: 4,
+    blocks: [
+      {
+        title: 'Блок 1. Подготовка теста',
+        items: [
+          {
+            id: 'q_1', code: '1', short: 'Гипотезы',
+            title: 'Гипотезы сформулированы как проверяемые',
+            levels: {
+              0: 'Гипотезы вида «проверим экран/тариф», без конкретики.',
+              1: 'Гипотезы есть, но смешивают несколько предположений в одном или сформулированы как вопрос без конкретного поведения («понятен ли тариф пользователю?»).',
+              2: 'Гипотезы конкретны и опровергаемы: «пользователь выберет невозвратный тариф, ориентируясь только на цену», «пользователь не заметит иконку ⓘ».'
+            }
+          }
+        ]
+      },
+      {
+        title: 'Блок 4. Анализ результатов',
+        items: [
+          {
+            id: 'q_4', code: '4', short: 'Выводы',
+            title: 'Выводы отвечают на цель исследования, а не пересказывают сессию',
+            levels: {
+              0: 'Вывод — это пересказ произошедшего.',
+              1: 'Вывод сформулирован, но слишком общий или не привязан к конкретному наблюдению из сессии.',
+              2: 'Вывод конкретен, обоснован наблюдением из сессии и отвечает на исходный вопрос заказчика.'
+            }
+          }
+        ]
+      }
+    ]
+  },
+
+  respondent: {
+    label: 'Респондент',
+    title: 'Анкета респондента',
+    subtitle: 'Блок 2 «Поведение ведущего во время теста» и блок 3 «Реакция на сложные ситуации»',
+    max: 12,
+    blocks: [
+      {
+        title: 'Блок 2. Поведение ведущего во время теста',
+        items: [
+          {
+            id: 'q_2_1', code: '2.1', short: 'Не помогает и не подсказывает',
+            title: '2.1. Не помогает, не обучает, не подсказывает',
+            levels: {
+              0: 'Ведущий называет элементы интерфейса или прямо подсказывает следующий шаг («нажмите на иконку рядом»).',
+              1: 'Подсказок нет, но ведущий слишком быстро вмешивается в паузу или переформулирует вопрос респондента за него.',
+              2: 'Выдерживает паузу, возвращает ответственность за решение респонденту («попробуйте так, как сделали бы обычно»), не вмешивается в процесс выбора.'
+            }
+          },
+          {
+            id: 'q_2_2', code: '2.2', short: 'Открытые вопросы',
+            title: '2.2. Задаёт открытые вопросы, а не закрытые / наводящие / про мнение',
+            levels: {
+              0: 'Вопросы в основном закрытые («понятно?», «нравится?») или содержат подсказку («вы заметили кнопку справа?»).',
+              1: 'Часть вопросов открытая, но есть срывы в мнение («как вам этот экран?») или в подсказку.',
+              2: 'Вопросы устойчиво открытые, про поведение / ожидание / причину: «что вы ожидали увидеть?», «расскажите, что сейчас происходит».'
+            }
+          },
+          {
+            id: 'q_2_3', code: '2.3', short: 'Нейтральная реакция',
+            title: '2.3. Нейтральная реакция на критику и эмоции респондента',
+            levels: {
+              0: 'Ведущий защищает дизайн, соглашается с оценкой или обесценивает эмоцию респондента.',
+              1: 'Реакция в целом нейтральная, но иногда соскальзывает в «да, согласен, это неудобно» или в шутку вместо признания эмоции.',
+              2: 'Стабильно уводит от оценки к поведению («что именно показалось неудобным?»), признаёт эмоцию без оценки решения.'
+            }
+          },
+          {
+            id: 'q_2_4', code: '2.4', short: 'Тайминг и структура',
+            title: '2.4. Ведущий укладывается в тайминг и завершает сессию по скрипту',
+            levels: {
+              0: 'Задачи даются вперемешку, вступление / завершение теста отсутствует.',
+              1: 'Вступление и завершение есть, но задачи даются не по одной или тайминг сильно нарушен.',
+              2: 'Чёткая структура: вступление → задачи по одной → вопросы после каждой → завершение с открытым финальным вопросом.'
+            }
+          }
+        ]
+      },
+      {
+        title: 'Блок 3. Реакция на сложные ситуации',
+        items: [
+          {
+            id: 'q_3_1', code: '3.1', short: 'Респондент молчит',
+            title: '3.1. Респондент молчит / не может продолжить',
+            levels: {
+              0: 'Ведущий сразу заполняет паузу или подсказывает направление.',
+              1: 'Пауза выдержана, но возврат к процессу звучит как подсказка («попробуйте посмотреть в меню»).',
+              2: 'Возврат нейтральный, к цели задачи или к процессу: «что вы сейчас пытаетесь сделать?»'
+            }
+          },
+          {
+            id: 'q_3_2', code: '3.2', short: 'Просит подсказать / критикует',
+            title: '3.2. Респондент просит подсказать / критикует дизайн',
+            levels: {
+              0: 'Подсказка дана напрямую, либо ведущий согласился с критикой дизайна.',
+              1: 'Подсказка не дана, но ответ звучит уклончиво, не возвращает респондента к задаче.',
+              2: 'Ответственность возвращена респонденту без подсказки и без оценки дизайна.'
+            }
+          }
+        ]
+      }
+    ]
+  }
+};
+
+/* ============================================================
+   3. СОСТОЯНИЕ И DOM
+   ============================================================ */
+const state = { role: null };
+
+const screens   = { role: document.getElementById('screen-role'),
+                    form: document.getElementById('screen-form'),
+                    done: document.getElementById('screen-done') };
+const form       = document.getElementById('form');
+const blocksHost = document.getElementById('blocks');
+const scoreChip  = document.getElementById('scoreChip');
+const scoreVal   = document.getElementById('scoreVal');
+const scoreMax   = document.getElementById('scoreMax');
+const progressWrap = document.getElementById('progressWrap');
+const progressBar  = document.getElementById('progressBar');
+const formError  = document.getElementById('formError');
+const submitBtn  = document.getElementById('submitBtn');
+
+/* ============================================================
+   4. РЕНДЕР
+   ============================================================ */
+function showScreen(name){
+  Object.values(screens).forEach(s => s.hidden = true);
+  screens[name].hidden = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function startRole(role){
+  state.role = role;
+  const cfg = ROLES[role];
+
+  document.getElementById('formTitle').textContent = cfg.title;
+  document.getElementById('formSubtitle').textContent = cfg.subtitle;
+  scoreMax.textContent = cfg.max;
+  scoreChip.hidden = false;
+  progressWrap.hidden = false;
+  formError.hidden = true;
+
+  renderBlocks(cfg);
+  updateScore();
+  showScreen('form');
+}
+
+function renderBlocks(cfg){
+  blocksHost.innerHTML = '';
+  cfg.blocks.forEach(block => {
+    const sec = document.createElement('section');
+    sec.className = 'block';
+
+    const h = document.createElement('h3');
+    h.className = 'block-title';
+    h.textContent = block.title;
+    sec.appendChild(h);
+
+    block.items.forEach(item => sec.appendChild(renderItem(item)));
+    blocksHost.appendChild(sec);
+  });
+}
+
+function renderItem(item){
+  const q = document.createElement('div');
+  q.className = 'q';
+  q.dataset.qid = item.id;
+
+  const head = document.createElement('div');
+  head.className = 'q-head';
+  const code = document.createElement('span');
+  code.className = 'q-code';
+  code.textContent = item.code;
+  const title = document.createElement('span');
+  title.className = 'q-title';
+  title.textContent = item.title;
+  head.append(code, title);
+  q.appendChild(head);
+
+  const opts = document.createElement('div');
+  opts.className = 'opts';
+
+  [0, 1, 2].forEach(v => {
+    const label = document.createElement('label');
+    label.className = 'opt';
+
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = item.id;
+    input.value = String(v);
+
+    const badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.textContent = String(v);
+
+    const body = document.createElement('span');
+    body.className = 'opt-body';
+    body.textContent = item.levels[v];
+
+    label.append(input, badge, body);
+    opts.appendChild(label);
+  });
+  q.appendChild(opts);
+
+  const ta = document.createElement('textarea');
+  ta.className = 'q-comment';
+  ta.name = item.id + '__comment';
+  ta.rows = 2;
+  ta.placeholder = 'Комментарий / наблюдение (необязательно)';
+  q.appendChild(ta);
+
+  return q;
+}
+
+/* ============================================================
+   5. СЧЁТЧИК И ПРОГРЕСС
+   ============================================================ */
+function updateScore(){
+  const cfg = ROLES[state.role];
+  let sum = 0, answered = 0, total = 0;
+
+  cfg.blocks.forEach(b => b.items.forEach(item => {
+    total++;
+    const checked = form.querySelector(`input[name="${item.id}"]:checked`);
+    if (checked){ answered++; sum += Number(checked.value); }
+  }));
+
+  scoreVal.textContent = sum;
+  progressBar.style.width = (total ? (answered / total) * 100 : 0) + '%';
+}
+
+/* подсветка выбранного варианта */
+form.addEventListener('change', e => {
+  if (e.target.type !== 'radio') return;
+  const group = e.target.closest('.opts');
+  group.querySelectorAll('.opt').forEach(l => l.classList.remove('selected'));
+  e.target.closest('.opt').classList.add('selected');
+  e.target.closest('.q').classList.remove('invalid');
+  updateScore();
+});
+
+/* ============================================================
+   6. ВАЛИДАЦИЯ И СБОР ДАННЫХ
+   ============================================================ */
+function validate(){
+  const cfg = ROLES[state.role];
+  let firstBad = null;
+
+  // обязательные текстовые поля
+  ['sessionId', 'moderator', 'expert'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el.value.trim()){
+      el.classList.add('invalid');
+      if (!firstBad) firstBad = el;
+    } else {
+      el.classList.remove('invalid');
+    }
+  });
+
+  // все критерии оценены
+  cfg.blocks.forEach(b => b.items.forEach(item => {
+    const checked = form.querySelector(`input[name="${item.id}"]:checked`);
+    const node = form.querySelector(`.q[data-qid="${item.id}"]`);
+    if (!checked){
+      node.classList.add('invalid');
+      if (!firstBad) firstBad = node;
+    } else {
+      node.classList.remove('invalid');
+    }
+  }));
+
+  if (firstBad){
+    firstBad.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return 'Заполните обязательные поля и поставьте оценку по каждому критерию.';
+  }
+  return null;
+}
+
+function buildPayload(){
+  const cfg = ROLES[state.role];
+  const val = id => document.getElementById(id).value.trim();
+
+  const headers = ['Отправлено', 'Роль', 'ID сессии', 'Ведущий', 'Эксперт', 'Дата сессии'];
+  const row = [
+    new Date().toLocaleString('ru-RU'),
+    cfg.label,
+    val('sessionId'),
+    val('moderator'),
+    val('expert'),
+    val('sessionDate')
+  ];
+
+  let total = 0;
+
+  cfg.blocks.forEach(b => b.items.forEach(item => {
+    const checked = form.querySelector(`input[name="${item.id}"]:checked`);
+    const score = checked ? Number(checked.value) : '';
+    if (checked) total += Number(checked.value);
+
+    headers.push(`Б${item.code}. ${item.short}`);
+    row.push(score);
+
+    const comment = form.querySelector(`textarea[name="${item.id}__comment"]`).value.trim();
+    headers.push(`Комментарий Б${item.code}`);
+    row.push(comment);
+  }));
+
+  headers.push('Итоговый балл', 'Общий комментарий');
+  row.push(total, val('overallComment'));
+
+  return { role: state.role, headers, row };
+}
+
+/* ============================================================
+   7. ОТПРАВКА
+   ============================================================ */
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  formError.hidden = true;
+
+  const problem = validate();
+  if (problem){
+    formError.textContent = problem;
+    formError.hidden = false;
+    return;
+  }
+
+  const payload = buildPayload();
+
+  if (!/^https?:\/\//.test(SCRIPT_URL)){
+    formError.textContent = 'Не настроен URL веб-приложения Google Apps Script (константа SCRIPT_URL в коде страницы).';
+    formError.hidden = false;
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Отправляем…';
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)   // Content-Type: text/plain — без preflight
+    });
+
+    const cfg = ROLES[state.role];
+    const total = payload.row[payload.headers.indexOf('Итоговый балл')];
+    document.getElementById('doneText').textContent =
+      `Анкета «${cfg.label}» записана. Итоговый балл: ${total} из ${cfg.max}.`;
+
+    showScreen('done');
+  } catch (err) {
+    formError.textContent = 'Не удалось отправить: ' + err.message + '. Проверьте соединение и попробуйте ещё раз.';
+    formError.hidden = false;
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Отправить';
+  }
+});
+
+/* ============================================================
+   8. НАВИГАЦИЯ
+   ============================================================ */
+document.querySelectorAll('.role-card').forEach(card => {
+  card.addEventListener('click', () => startRole(card.dataset.role));
+});
+
+document.getElementById('backBtn').addEventListener('click', () => {
+  scoreChip.hidden = true;
+  progressWrap.hidden = true;
+  showScreen('role');
+});
+
+document.getElementById('againBtn').addEventListener('click', () => {
+  form.reset();
+  form.querySelectorAll('.opt.selected').forEach(l => l.classList.remove('selected'));
+  form.querySelectorAll('.q.invalid, .invalid').forEach(el => el.classList.remove('invalid'));
+  scoreChip.hidden = true;
+  progressWrap.hidden = true;
+  formError.hidden = true;
+  state.role = null;
+  showScreen('role');
+});
+
+/* дата по умолчанию — сегодня */
+document.getElementById('sessionDate').value = new Date().toISOString().slice(0, 10);
+</script>
+</body>
+</html>
